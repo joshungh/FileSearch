@@ -1,6 +1,8 @@
 import sys, os, re
+import openpyxl as xl
 from threading import Thread
 from PyQt5.QtWidgets import *
+from PyQt5.QtGui import QTextCursor, QTextCharFormat, QBrush, QColor
 from PyQt5.QtCore import pyqtSlot
 
 class App(QMainWindow):
@@ -25,17 +27,19 @@ class App(QMainWindow):
         self.button.move(550, 25)
 
         self.combo = QComboBox(self)
+        self.combo.resize(500, 25)
         self.combo.move(20, 80)
 
         self.button2 = QPushButton('Go', self)
-        self.button2.move(150, 80)
+        self.button2.move(550, 77)
 
         # Create textbox
         self.textbox = QLineEdit(self)
         self.textbox.move(20, 20)
         self.textbox.resize(500, 40)
 
-        self.response_box = QLineEdit(self)
+        self.response_box = QPlainTextEdit(self)
+        self.response_box.setReadOnly(True)
         self.response_box.move(20, 120)
         self.response_box.resize(640, 500)
 
@@ -46,16 +50,25 @@ class App(QMainWindow):
 
         self.show()
 
+
     @pyqtSlot()
     def get_text(self):
-        self.response_box.setText('')
+        self.response_box.setPlainText('')
         chosen_path = self.combo.currentText()
+        text_content = ""
+        print("chosen_path: ", chosen_path)
+        if chosen_path is not "":
+            with open(chosen_path) as f:
+                text = f.readlines()
+                for line in text:
+                    text_content += line
+            self.response_box.setPlainText(text_content)
         self.combo.clear()
-        self.response_box.setText(chosen_path)
 
     @pyqtSlot()
     def on_click(self):
         textboxValue = self.textbox.text()
+        self.keyword = textboxValue
         li = self.search_directory(textboxValue)
         self.combo.addItems(li)
         self.textbox.setText("")
@@ -70,8 +83,7 @@ class App(QMainWindow):
             line = line.strip(" ")
             if (line == "Caption" or line == ""):
                 continue
-            list1.append(line)
-        print(drive for drive in list1)
+            list1.append(line + '/')
         return list1
 
     def search_directory(self, keyword):
@@ -83,8 +95,6 @@ class App(QMainWindow):
                         if re.compile(keyword).search(os.path.join(root, f)):
                             results.append(os.path.join(root, f))
         return results
-
-
 
 
 if __name__ == '__main__':
