@@ -1,12 +1,9 @@
 import sys, os, re
-
-from PyQt5 import QtCore, QtGui
+import openpyxl as xl
+from threading import Thread
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QTextCursor, QTextCharFormat, QBrush, QColor
 from PyQt5.QtCore import pyqtSlot
-
-
-import re
 
 class App(QMainWindow):
 
@@ -41,7 +38,7 @@ class App(QMainWindow):
         self.textbox.move(20, 20)
         self.textbox.resize(500, 40)
 
-        self.response_box = QTextEdit(self)
+        self.response_box = QPlainTextEdit(self)
         self.response_box.setReadOnly(True)
         self.response_box.move(20, 120)
         self.response_box.resize(640, 500)
@@ -53,27 +50,19 @@ class App(QMainWindow):
 
         self.show()
 
+
     @pyqtSlot()
     def get_text(self):
-        self.response_box.setText('')
+        self.response_box.setPlainText('')
         chosen_path = self.combo.currentText()
         text_content = ""
-        key_content = ""
-        non_key_content = ""
+        print("chosen_path: ", chosen_path)
         if chosen_path is not "":
             with open(chosen_path) as f:
                 text = f.readlines()
                 for line in text:
-                    fields = line.split()
-                    for word in fields:
-                        if word == self.keyword:
-                            key_content = word
-                            self.response_box.setTextColor(QColor(255,0,0))
-                            self.response_box.append(key_content)
-                        else:
-                            text_content = word
-                            self.response_box.setTextColor(QColor(0, 0, 0))
-                            self.response_box.append(text_content)
+                    text_content += line
+            self.response_box.setPlainText(text_content)
         self.combo.clear()
 
     @pyqtSlot()
@@ -105,8 +94,6 @@ class App(QMainWindow):
                     if os.path.splitext(f)[1] == '.txt':
                         if re.compile(keyword).search(os.path.join(root, f)):
                             results.append(os.path.join(root, f))
-                    elif os.path.splitext(f)[1] == '.xlsx':
-                        results.append(os.path.join(root, f))
         return results
 
 
