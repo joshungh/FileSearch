@@ -1,9 +1,15 @@
 import sys, os, re
-import openpyxl as xl
-from threading import Thread
+import openpyxl
+from xlsxwriter.utility import xl_rowcol_to_cell
+import xlrd
+from pptx import Presentation
+from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QTextCursor, QTextCharFormat, QBrush, QColor
 from PyQt5.QtCore import pyqtSlot
+
+
+import re
 
 class App(QMainWindow):
 
@@ -38,7 +44,7 @@ class App(QMainWindow):
         self.textbox.move(20, 20)
         self.textbox.resize(500, 40)
 
-        self.response_box = QPlainTextEdit(self)
+        self.response_box = QTextEdit(self)
         self.response_box.setReadOnly(True)
         self.response_box.move(20, 120)
         self.response_box.resize(640, 500)
@@ -50,19 +56,79 @@ class App(QMainWindow):
 
         self.show()
 
-
     @pyqtSlot()
     def get_text(self):
-        self.response_box.setPlainText('')
+        self.response_box.setText('')
         chosen_path = self.combo.currentText()
-        text_content = ""
-        print("chosen_path: ", chosen_path)
-        if chosen_path is not "":
+        text_content = list()
+        key_content = ""
+        non_key_content = ""
+        if chosen_path.endswith('.txt'):
             with open(chosen_path) as f:
                 text = f.readlines()
                 for line in text:
-                    text_content += line
-            self.response_box.setPlainText(text_content)
+                    fields = line.split(" ")
+                    for word in fields:
+                        if word != 'xcl98':#self.keyword:
+                            text_content.append(word)
+                        else:
+                            non_key_content = " ".join(text_content)
+                            non_key_content += " "
+                            self.response_box.setTextColor(QColor(0, 0, 0))
+                            self.response_box.insertPlainText(non_key_content)
+                            del text_content[:]
+                            key_content = " " + word + " "
+                            non_key_content = ""
+                            self.response_box.setTextColor(QColor(255, 0, 0))
+                            self.response_box.insertPlainText(key_content)
+                    if text_content:
+                        non_key_content = " ".join(text_content)
+                        self.response_box.setTextColor(QColor(0, 0, 0))
+                        self.response_box.insertPlainText(non_key_content)
+        elif chosen_path.endswith('.xlsx'):
+            normalData = list()
+            normalOutput = ""
+            key_content = ""
+            wb = xlrd.open_workbook(chosen_path)
+            sheet = wb.sheet_by_index(0)
+            for row_num in range(sheet.nrows):
+                for col_num in range(sheet.ncols):
+                    cell_obj = sheet.row(row_num)[col_num]
+                    if cell_obj.value != self.keyword:
+                        normalData.append(cell_obj.value)
+
+                    else:
+                        normalOutput = "    ".join(normalData)
+                        self.response_box.setTextColor(QColor(0, 0, 0))
+                        self.response_box.insertPlainText(normalOutput)
+                        del normalData[:]
+                        key_content = self.keyword + "  "
+                        self.response_box.setTextColor(QColor(255, 0, 0))
+                        self.response_box.insertPlainText(key_content)
+                normalData.append('\n')
+            if normalData:
+                normalOutput = "    ".join(normalData)
+                self.response_box.setTextColor(QColor(0, 0, 0))
+                self.response_box.insertPlainText(normalOutput)
+        elif chosen_path.endswith('.pptx'):
+            normalData = list()
+            normalOutput = ""
+            key_content = ""
+            f = open('C:/a/a1.pptx')
+            # f = open(os.path.expanduser('~/.' + f)
+            prs = Presentation(f)
+            for slides in prs.slides:
+                for shape in slides.shapes:
+                    if not shape.has_text_frame:
+                        continue
+                    text_frame = shape.text_frame
+                    for paragraph in text_frame.paragraphs:
+                        for run in paragraph.runs:
+                            if keyword in run.text:
+                                print("1")
+                                #results.append(os.path.join(root, f))
+
+
         self.combo.clear()
 
     @pyqtSlot()
@@ -91,9 +157,33 @@ class App(QMainWindow):
         for each in self.all_drives:
             for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
+                    '''
                     if os.path.splitext(f)[1] == '.txt':
-                        if re.compile(keyword).search(os.path.join(root, f)):
+                        cur_f = open(os.path.expanduser('~/.' + f))
+                        if cur_f.read().find(keyword):
                             results.append(os.path.join(root, f))
+                    if os.path.splitext(f)[1] == '.xlsx':
+                       # wb = xlrd.open_workbook(os.path.expanduser('C:/a/a1.xlsx'))
+                        wb = xlrd.open_workbook(os.path.expanduser('~/.' + f))
+                        sheet = wb.sheet_by_index(0)
+                        for row_num in range(sheet.nrows):
+                            for col_num in range(sheet.ncols):
+                                cell_obj = sheet.row(row_num)[col_num]
+                                if keyword == cell_obj.value:
+                                    results.append(os.path.join(root, f))
+                    '''
+                    if os.path.splitext(f)[1] == '.pptx':
+                        #f = open(os.path.expanduser('~/.' + f)
+                        prs = Presentation('C:/a/a1.pptx')
+                            for slides in prs.slides:
+                                for shape in slides.shapes:
+                                    if not shape.has_text_frame:
+                                        continue
+                                    text_frame = shape.text_frame
+                                    for paragraph in text_frame.paragraphs:
+                                        for run in paragraph.runs:
+                                            if keyword in run.text:
+                                                results.append(os.path.join(root, f))
         return results
 
 
