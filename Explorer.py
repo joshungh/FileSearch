@@ -222,15 +222,16 @@ class App(QMainWindow):
         for each in self.all_drives:
             for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
-                    if os.path.splitext(f)[1] == '.txt':
-                        cur_f = open(os.path.join(root,f))
+                    start, ext = splitext(f)
+                    if ext == '.txt':
+                        cur_f = open(os.path.join(root, f))
                         #cur_f = open(os.path.join(root, f))
                         if cur_f.read().find(keyword):
                             results.append(os.path.join(root, f))
 
                     if os.path.splitext(f)[1] == '.xlsx':
                         #wb = xlrd.open_workbook(os.path.expanduser('C:/a1/a1.xlsx'))
-                        wb = xlrd.open_workbook(os.path.join(root,f))
+                        wb = xlrd.open_workbook(os.path.join(root, f))
                         sheet = wb.sheet_by_index(0)
                         for row_num in range(sheet.nrows):
                             for col_num in range(sheet.ncols):
@@ -239,16 +240,18 @@ class App(QMainWindow):
                                     results.append(os.path.join(root, f))
                     if os.path.splitext(f)[1] == '.pptx':
                         #f = open(os.path.expanduser('~/.' + f)
-                        prs = Presentation(os.path.join(root,f))
+                        dirPath = os.path.join(root, f)
+                        input_path = dirPath + '/' + f
+                        prs = Presentation(os.path.join(root))
                         for slides in prs.slides:
                             for shape in slides.shapes:
                                 if shape.has_text_frame:
                                     if (shape.text.find(keyword)) != -1:
                                         results.append(os.path.join(root, f))
                     if os.path.splitext(f)[1] == '.docx':
-                        f = os.path.join(root,f)
-                        #f = os.path.join(root, f)
-                        document = Document(f)
+                        dirPath = os.path.join(os.path.join(root, f))
+                        input_path = dirPath + '/' + f
+                        document = Document(input_path)
                         for p in document.paragraphs:
                             if p.text.find(keyword) != -1:
                                 results.append(os.path.join(root, f))
