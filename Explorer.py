@@ -223,10 +223,10 @@ class App(QMainWindow):
             for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
                     if os.path.splitext(f)[1] == '.txt':
-                        cur_f = open(os.path.join(root,f))
-                        #cur_f = open(os.path.join(root, f))
-                        if cur_f.read().find(keyword):
-                            results.append(os.path.join(root, f))
+                        dirPath = os.path.join(root)
+                        with open(dirPath + '/' + f) as cur_f:
+                            if keyword in cur_f.read():
+                                results.append(os.path.join(root, f))
 
                     if os.path.splitext(f)[1] == '.xlsx':
                         #wb = xlrd.open_workbook(os.path.expanduser('C:/a1/a1.xlsx'))
