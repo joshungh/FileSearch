@@ -38,7 +38,7 @@ class App(QMainWindow):
         self.textbox.move(20, 20)
         self.textbox.resize(500, 40)
 
-        self.response_box = QPlainTextEdit(self)
+        self.response_box = QTextEdit(self)
         self.response_box.setReadOnly(True)
         self.response_box.move(20, 120)
         self.response_box.resize(640, 500)
@@ -58,11 +58,40 @@ class App(QMainWindow):
         text_content = ""
         print("chosen_path: ", chosen_path)
         if chosen_path is not "":
-            with open(chosen_path) as f:
-                text = f.readlines()
-                for line in text:
-                    text_content += line
-            self.response_box.setPlainText(text_content)
+            if chosen_path.endswith('.txt'):
+                with open(chosen_path) as f:
+                    text = f.readlines()
+                    for line in text:
+                        words = line.split(" ")
+                        print(words)
+                        for word in words:
+                            newWord = word
+
+                            # get a list of the extra letters and symbols that come after the keyword
+                            wordList = re.split(self.keyword, newWord)
+
+                            # regex and strip for taking out all random symbols, new lines, etc..
+                            newWord = re.sub(r'[^\w]', ' ', newWord)
+                            newWord = newWord.strip("\n")
+                            newWord = newWord.strip("\r")
+                            newWord = newWord.strip(" ")
+
+                            # check if the keyword is contained in the current word we're checking
+                            if self.keyword in newWord:
+                                # set text color to red and then print out to response_box
+                                self.response_box.setTextColor(QColor(255, 0, 0))
+                                self.response_box.insertPlainText(self.keyword)
+                                
+                                # insert the rest of the characters that aren't in the keyword in black
+                                for extra in wordList:
+                                    if extra is not '':
+                                        self.response_box.setTextColor(QColor(0 ,0 ,0))
+                                        self.response_box.insertPlainText(extra)
+
+                            # all the other words that aren't the keyword (inserted in black)
+                            else:
+                                self.response_box.setTextColor(QColor(0, 0, 0))
+                                self.response_box.insertPlainText(word + " ")
         self.combo.clear()
 
     @pyqtSlot()
