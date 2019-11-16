@@ -114,19 +114,40 @@ class App(QMainWindow):
             normalData = list()
             normalOutput = ""
             key_content = ""
-            f = open('C:/a/a1.pptx')
-            # f = open(os.path.expanduser('~/.' + f)
-            prs = Presentation(f)
+            tmp_text = ""
+            prs = Presentation(chosen_path)
             for slides in prs.slides:
                 for shape in slides.shapes:
-                    if not shape.has_text_frame:
-                        continue
-                    text_frame = shape.text_frame
-                    for paragraph in text_frame.paragraphs:
-                        for run in paragraph.runs:
-                            if keyword in run.text:
-                                print("1")
-                                #results.append(os.path.join(root, f))
+                    if shape.has_text_frame:
+                        if (shape.text.find(self.keyword)) != -1:
+                            tmp_text += shape.text
+                            fields = tmp_text.split(" ")
+                            for word in fields:
+                                if word != self.keyword:
+                                    normalData.append(word)
+                                else:
+                                    normalOutput = " ".join(normalData)
+                                    normalOutput += " "
+                                    self.response_box.setTextColor(QColor(0, 0, 0))
+                                    self.response_box.insertPlainText(normalOutput)
+                                    del normalData[:]
+                                    key_content = " " + self.keyword + " "
+                                    normalOutput = ""
+                                    self.response_box.setTextColor(QColor(255, 0, 0))
+                                    self.response_box.insertPlainText(key_content)
+                            if normalData:
+                                normalOutput = " ".join(normalData)
+                                self.response_box.setTextColor(QColor(0, 0, 0))
+                                self.response_box.insertPlainText(normalOutput)
+                                normalOutput = ""
+                        else:
+                            normalOutput += shape.text
+                            self.response_box.setTextColor(QColor(0, 0, 0))
+                            self.response_box.insertPlainText(normalOutput)
+                            normalOutput = ""
+                        tmp_text = ""
+                        normalOutput += "\n"
+
 
 
         self.combo.clear()
@@ -157,33 +178,31 @@ class App(QMainWindow):
         for each in self.all_drives:
             for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
-                    '''
                     if os.path.splitext(f)[1] == '.txt':
-                        cur_f = open(os.path.expanduser('~/.' + f))
+                        cur_f = open('C:/a/a1.txt')
+                        #cur_f = open(os.path.expanduser('~/.' + f))
                         if cur_f.read().find(keyword):
                             results.append(os.path.join(root, f))
+
                     if os.path.splitext(f)[1] == '.xlsx':
-                       # wb = xlrd.open_workbook(os.path.expanduser('C:/a/a1.xlsx'))
-                        wb = xlrd.open_workbook(os.path.expanduser('~/.' + f))
+                        wb = xlrd.open_workbook(os.path.expanduser('C:/a/a1.xlsx'))
+                        #wb = xlrd.open_workbook(os.path.expanduser('~/.' + f))
                         sheet = wb.sheet_by_index(0)
                         for row_num in range(sheet.nrows):
                             for col_num in range(sheet.ncols):
                                 cell_obj = sheet.row(row_num)[col_num]
                                 if keyword == cell_obj.value:
                                     results.append(os.path.join(root, f))
-                    '''
+
+
                     if os.path.splitext(f)[1] == '.pptx':
                         #f = open(os.path.expanduser('~/.' + f)
                         prs = Presentation('C:/a/a1.pptx')
-                            for slides in prs.slides:
-                                for shape in slides.shapes:
-                                    if not shape.has_text_frame:
-                                        continue
-                                    text_frame = shape.text_frame
-                                    for paragraph in text_frame.paragraphs:
-                                        for run in paragraph.runs:
-                                            if keyword in run.text:
-                                                results.append(os.path.join(root, f))
+                        for slides in prs.slides:
+                            for shape in slides.shapes:
+                                if shape.has_text_frame:
+                                    if (shape.text.find(keyword)) != -1:
+                                        results.append(os.path.join(root, f))
         return results
 
 
