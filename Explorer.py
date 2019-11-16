@@ -2,6 +2,8 @@ import sys, os, re
 import openpyxl
 from xlsxwriter.utility import xl_rowcol_to_cell
 import xlrd
+import docx
+from docx import Document
 from pptx import Presentation
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
@@ -60,16 +62,16 @@ class App(QMainWindow):
     def get_text(self):
         self.response_box.setText('')
         chosen_path = self.combo.currentText()
-        text_content = list()
-        key_content = ""
-        non_key_content = ""
         if chosen_path.endswith('.txt'):
+            text_content = list()
+            key_content = ""
+            non_key_content = ""
             with open(chosen_path) as f:
                 text = f.readlines()
                 for line in text:
                     fields = line.split(" ")
                     for word in fields:
-                        if word != 'xcl98':#self.keyword:
+                        if word != self.keyword:
                             text_content.append(word)
                         else:
                             non_key_content = " ".join(text_content)
@@ -96,7 +98,6 @@ class App(QMainWindow):
                     cell_obj = sheet.row(row_num)[col_num]
                     if cell_obj.value != self.keyword:
                         normalData.append(cell_obj.value)
-
                     else:
                         normalOutput = "    ".join(normalData)
                         self.response_box.setTextColor(QColor(0, 0, 0))
@@ -147,7 +148,43 @@ class App(QMainWindow):
                             normalOutput = ""
                         tmp_text = ""
                         normalOutput += "\n"
-
+        elif chosen_path.endswith('.docx'):
+            normalData = list()
+            normalOutput = ""
+            key_content = ""
+            tmp_text = ""
+            f = chosen_path
+            document = Document(f)
+            for p in document.paragraphs:
+                if p.text.find(self.keyword) != -1:
+                    tmp_text += p.text
+                    fields = tmp_text.split(" ")
+                    for word in fields:
+                        if word != self.keyword:
+                            normalData.append(word)
+                        else:
+                            normalOutput = " ".join(normalData)
+                            normalOutput += " "
+                            self.response_box.setTextColor(QColor(0, 0, 0))
+                            self.response_box.insertPlainText(normalOutput)
+                            del normalData[:]
+                            key_content = " " + self.keyword + " "
+                            normalOutput = ""
+                            self.response_box.setTextColor(QColor(255, 0, 0))
+                            self.response_box.insertPlainText(key_content)
+                    if normalData:
+                        normalOutput = " " + " ".join(normalData)
+                        self.response_box.setTextColor(QColor(0, 0, 0))
+                        self.response_box.insertPlainText(normalOutput)
+                        del normalData[:]
+                        normalOutput = ""
+                else:
+                    normalOutput += p.text
+                    self.response_box.setTextColor(QColor(0, 0, 0))
+                    self.response_box.insertPlainText(normalOutput)
+                    normalOutput = ""
+                tmp_text = ""
+                normalData.append("\n")
 
 
         self.combo.clear()
@@ -180,7 +217,7 @@ class App(QMainWindow):
                 for f in files:
                     if os.path.splitext(f)[1] == '.txt':
                         cur_f = open('C:/a/a1.txt')
-                        #cur_f = open(os.path.expanduser('~/.' + f))
+                        #cur_f = open(os.path.join(root, f))
                         if cur_f.read().find(keyword):
                             results.append(os.path.join(root, f))
 
@@ -193,8 +230,6 @@ class App(QMainWindow):
                                 cell_obj = sheet.row(row_num)[col_num]
                                 if keyword == cell_obj.value:
                                     results.append(os.path.join(root, f))
-
-
                     if os.path.splitext(f)[1] == '.pptx':
                         #f = open(os.path.expanduser('~/.' + f)
                         prs = Presentation('C:/a/a1.pptx')
@@ -203,6 +238,13 @@ class App(QMainWindow):
                                 if shape.has_text_frame:
                                     if (shape.text.find(keyword)) != -1:
                                         results.append(os.path.join(root, f))
+                    if os.path.splitext(f)[1] == '.docx':
+                        f = 'C:/a/a1.docx'
+                        #f = os.path.join(root, f)
+                        document = Document(f)
+                        for p in document.paragraphs:
+                            if p.text.find(keyword) != -1:
+                                results.append(os.path.join(root, f))
         return results
 
 
