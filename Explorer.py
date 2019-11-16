@@ -223,14 +223,14 @@ class App(QMainWindow):
             for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
                     if os.path.splitext(f)[1] == '.txt':
-                        cur_f = open(os.path.join(root, f))
+                        cur_f = open(os.path.join(root,f))
                         #cur_f = open(os.path.join(root, f))
                         if cur_f.read().find(keyword):
                             results.append(os.path.join(root, f))
 
                     if os.path.splitext(f)[1] == '.xlsx':
-                        wb = xlrd.open_workbook(os.path.expanduser('C:/a1/a1.xlsx'))
-                        #wb = xlrd.open_workbook(os.path.expanduser('~/.' + f))
+                        #wb = xlrd.open_workbook(os.path.expanduser('C:/a1/a1.xlsx'))
+                        wb = xlrd.open_workbook(os.path.join(root,f))
                         sheet = wb.sheet_by_index(0)
                         for row_num in range(sheet.nrows):
                             for col_num in range(sheet.ncols):
@@ -239,14 +239,14 @@ class App(QMainWindow):
                                     results.append(os.path.join(root, f))
                     if os.path.splitext(f)[1] == '.pptx':
                         #f = open(os.path.expanduser('~/.' + f)
-                        prs = Presentation(os.path.join(root, f))
+                        prs = Presentation(os.path.join(root,f))
                         for slides in prs.slides:
                             for shape in slides.shapes:
                                 if shape.has_text_frame:
                                     if (shape.text.find(keyword)) != -1:
                                         results.append(os.path.join(root, f))
                     if os.path.splitext(f)[1] == '.docx':
-                        f = 'C:/a1/a1.docx'
+                        f = os.path.join(root)
                         #f = os.path.join(root, f)
                         document = Document(f)
                         for p in document.paragraphs:
