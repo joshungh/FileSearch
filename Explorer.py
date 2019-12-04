@@ -2,7 +2,6 @@ import sys, os, re
 import openpyxl
 from xlsxwriter.utility import xl_rowcol_to_cell
 import xlrd
-import docx
 from docx import Document
 from pptx import Presentation
 from PyQt5 import QtCore, QtGui
@@ -220,11 +219,10 @@ class App(QMainWindow):
     def search_directory(self, keyword):
         results = []
         for each in self.all_drives:
-            for root, dir, files in os.walk(each, topdown=True):
+            for root, dir, files in os.walk("D:/", topdown=True):
                 for f in files:
                     if os.path.splitext(f)[1] == '.txt':
-                        dirPath = os.path.join(root)
-                        with open(dirPath + '/' + f) as cur_f:
+                        with open(root + '/' + f,errors='ignore') as cur_f:
                             if keyword in cur_f.read():
                                 results.append(os.path.join(root, f))
 
@@ -237,6 +235,7 @@ class App(QMainWindow):
                                 cell_obj = sheet.row(row_num)[col_num]
                                 if keyword == cell_obj.value:
                                     results.append(os.path.join(root, f))
+
                     if os.path.splitext(f)[1] == '.pptx':
                         #f = open(os.path.expanduser('~/.' + f)
                         prs = Presentation(os.path.join(root,f))
@@ -245,10 +244,9 @@ class App(QMainWindow):
                                 if shape.has_text_frame:
                                     if (shape.text.find(keyword)) != -1:
                                         results.append(os.path.join(root, f))
+
                     if os.path.splitext(f)[1] == '.docx':
-                        f = os.path.join(root)
-                        #f = os.path.join(root, f)
-                        document = Document(f)
+                        document = Document(root + '/' + f)
                         for p in document.paragraphs:
                             if p.text.find(keyword) != -1:
                                 results.append(os.path.join(root, f))
