@@ -219,7 +219,7 @@ class App(QMainWindow):
     def search_directory(self, keyword):
         results = []
         for each in self.all_drives:
-            for root, dir, files in os.walk("D:/", topdown=True):
+            for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
                     if os.path.splitext(f)[1] == '.txt':
                         with open(root + '/' + f,errors='ignore') as cur_f:
