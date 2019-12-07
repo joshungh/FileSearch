@@ -5,6 +5,7 @@ import xlrd
 from docx import Document
 from pptx import Presentation
 from PyQt5 import QtCore, QtGui
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QTextCursor, QTextCharFormat, QBrush, QColor
 from PyQt5.QtCore import pyqtSlot
@@ -190,10 +191,8 @@ class App(QMainWindow):
                     self.response_box.insertPlainText(normalOutput)
                     normalOutput = ""
 
-
-
-
         self.combo.clear()
+
 
     @pyqtSlot()
     def on_click(self):
@@ -219,12 +218,13 @@ class App(QMainWindow):
     def search_directory(self, keyword):
         results = []
         for each in self.all_drives:
-            for root, dir, files in os.walk(each, topdown=True):
+            for root, dir, files in os.walk("D:/", topdown=True):
                 for f in files:
                     if os.path.splitext(f)[1] == '.txt':
                         with open(root + '/' + f,errors='ignore') as cur_f:
                             if keyword in cur_f.read():
                                 results.append(os.path.join(root, f))
+                                break
 
                     if os.path.splitext(f)[1] == '.xlsx':
                         #wb = xlrd.open_workbook(os.path.expanduser('C:/a1/a1.xlsx'))
@@ -235,6 +235,7 @@ class App(QMainWindow):
                                 cell_obj = sheet.row(row_num)[col_num]
                                 if keyword == cell_obj.value:
                                     results.append(os.path.join(root, f))
+                                    break
 
                     if os.path.splitext(f)[1] == '.pptx':
                         #f = open(os.path.expanduser('~/.' + f)
@@ -244,12 +245,15 @@ class App(QMainWindow):
                                 if shape.has_text_frame:
                                     if (shape.text.find(keyword)) != -1:
                                         results.append(os.path.join(root, f))
+                                        break
+
 
                     if os.path.splitext(f)[1] == '.docx':
                         document = Document(root + '/' + f)
                         for p in document.paragraphs:
                             if p.text.find(keyword) != -1:
                                 results.append(os.path.join(root, f))
+                                break
         return results
 
 
