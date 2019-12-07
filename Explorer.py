@@ -24,6 +24,11 @@ class App(QMainWindow):
         self.all_drives = self.get_drives()
         self.initUI()
 
+        # boolean to determine if we recursively search or if we search through a list
+        self.isSearchList = False
+        # a list object storing all the paths
+        self.listOfPaths = []
+
     def initUI(self):
         self.all_drives = self.get_drives()
 
@@ -190,16 +195,21 @@ class App(QMainWindow):
                     self.response_box.insertPlainText(normalOutput)
                     normalOutput = ""
 
-
-
-
         self.combo.clear()
 
     @pyqtSlot()
     def on_click(self):
         textboxValue = self.textbox.text()
         self.keyword = textboxValue
-        li = self.search_directory(textboxValue)
+
+        # will recursively search the first time
+        if isSearchList is not True:
+        	li = self.search_directory(textboxValue)
+        	# set boolean to true so that we won't recursively search anymore
+        	self.isSearchList = True
+        else
+        # from then on, we search through the list of paths
+        	li = self.search_list(textboxValue)
         self.combo.addItems(li)
         self.textbox.setText("")
 
@@ -216,17 +226,53 @@ class App(QMainWindow):
             list1.append(line + '/')
         return list1
 
+    def search_list(self, keyword):
+    	results = []
+    	for f in self.listOfPaths:
+    		if os.path.splitext(f)[1] == '.txt':
+    			with open(root + '/' + f,errors='ignore') as cur_f:
+                            if keyword in cur_f.read():
+                                results.append(os.path.join(root, f))
+    		if os.path.splitext(f)[1] == '.xlsx':
+    			wb = xlrd.open_workbook(os.path.join(root,f))
+                        sheet = wb.sheet_by_index(0)
+                        for row_num in range(sheet.nrows):
+                            for col_num in range(sheet.ncols):
+                                cell_obj = sheet.row(row_num)[col_num]
+                                if keyword == cell_obj.value:
+                                    results.append(os.path.join(root, f))
+    		if os.path.splitext(f)[1] == '.pptx':
+    			prs = Presentation(os.path.join(root,f))
+                        for slides in prs.slides:
+                            for shape in slides.shapes:
+                                if shape.has_text_frame:
+                                    if (shape.text.find(keyword)) != -1:
+                                        results.append(os.path.join(root, f))
+    		if os.path.splitext(f)[1] == '.docx':
+    			document = Document(root + '/' + f)
+                        for p in document.paragraphs:
+                            if p.text.find(keyword) != -1:
+                                results.append(os.path.join(root, f))
+        return results
+
+
     def search_directory(self, keyword):
         results = []
         for each in self.all_drives:
             for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
                     if os.path.splitext(f)[1] == '.txt':
+                    	# append path to the list
+                    	self.listOfPaths.append(os.path.join(root, f)
+
                         with open(root + '/' + f,errors='ignore') as cur_f:
                             if keyword in cur_f.read():
                                 results.append(os.path.join(root, f))
 
                     if os.path.splitext(f)[1] == '.xlsx':
+                    	# append path to the list
+                    	self.listOfPaths.append(os.path.join(root, f)
+
                         #wb = xlrd.open_workbook(os.path.expanduser('C:/a1/a1.xlsx'))
                         wb = xlrd.open_workbook(os.path.join(root,f))
                         sheet = wb.sheet_by_index(0)
@@ -237,6 +283,9 @@ class App(QMainWindow):
                                     results.append(os.path.join(root, f))
 
                     if os.path.splitext(f)[1] == '.pptx':
+                    	# append path to the list
+                    	self.listOfPaths.append(os.path.join(root, f)
+
                         #f = open(os.path.expanduser('~/.' + f)
                         prs = Presentation(os.path.join(root,f))
                         for slides in prs.slides:
@@ -246,6 +295,9 @@ class App(QMainWindow):
                                         results.append(os.path.join(root, f))
 
                     if os.path.splitext(f)[1] == '.docx':
+                    	# append path to the list
+                    	self.listOfPaths.append(os.path.join(root, f)
+
                         document = Document(root + '/' + f)
                         for p in document.paragraphs:
                             if p.text.find(keyword) != -1:
