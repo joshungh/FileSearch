@@ -1,16 +1,12 @@
-import sys, os, re
-import openpyxl
-from xlsxwriter.utility import xl_rowcol_to_cell
+import sys, os
 import xlrd
 from docx import Document
 from pptx import Presentation
-from PyQt5 import QtCore, QtGui
+
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QTextCursor, QTextCharFormat, QBrush, QColor
+from PyQt5.QtGui import QColor
 from PyQt5.QtCore import pyqtSlot
 
-
-import re
 
 class App(QMainWindow):
 
@@ -23,11 +19,6 @@ class App(QMainWindow):
         self.height = 660
         self.all_drives = self.get_drives()
         self.initUI()
-
-        # boolean to determine if we recursively search or if we search through a list
-        self.isSearchList = False
-        # a list object storing all the paths
-        self.listOfPaths = []
 
     def initUI(self):
         self.all_drives = self.get_drives()
@@ -75,17 +66,22 @@ class App(QMainWindow):
                 for line in text:
                     fields = line.split(" ")
                     for word in fields:
-                        if word != self.keyword:
-                            text_content.append(word)
+                        if word.find(self.keyword) == -1:
+                            text_content.append(word + ' ')
                         else:
+                            startpos = word.find(self.keyword)
+                            endpos = startpos + len(self.keyword)
+                            text_content.append(word[0:startpos])
                             non_key_content = " ".join(text_content)
                             self.response_box.setTextColor(QColor(0, 0, 0))
                             self.response_box.insertPlainText(non_key_content)
                             del text_content[:]
-                            key_content = " " + self.keyword
+                            key_content = self.keyword
                             non_key_content = ""
                             self.response_box.setTextColor(QColor(255, 0, 0))
                             self.response_box.insertPlainText(key_content)
+                            self.response_box.setTextColor(QColor(0, 0, 0))
+                            self.response_box.insertPlainText(word[endpos:])
                     if text_content:
                         non_key_content = " " + " ".join(text_content)
                         self.response_box.setTextColor(QColor(0, 0, 0))
@@ -102,7 +98,7 @@ class App(QMainWindow):
             for row_num in range(sheet.nrows):
                 for col_num in range(sheet.ncols):
                     cell_obj = sheet.row(row_num)[col_num]
-                    if cell_obj.value != self.keyword:
+                    if cell_obj.value.find(self.keyword) == -1:
                         normalData.append(cell_obj.value)
                     else:
                         normalOutput = "    ".join(normalData)
@@ -197,19 +193,12 @@ class App(QMainWindow):
 
         self.combo.clear()
 
+
     @pyqtSlot()
     def on_click(self):
         textboxValue = self.textbox.text()
         self.keyword = textboxValue
-
-        # will recursively search the first time
-        if isSearchList is not True:
-        	li = self.search_directory(textboxValue)
-        	# set boolean to true so that we won't recursively search anymore
-        	self.isSearchList = True
-        else
-        # from then on, we search through the list of paths
-        	li = self.search_list(textboxValue)
+        li = self.search_directory(textboxValue)
         self.combo.addItems(li)
         self.textbox.setText("")
 
@@ -226,82 +215,49 @@ class App(QMainWindow):
             list1.append(line + '/')
         return list1
 
-    def search_list(self, keyword):
-    	results = []
-    	for f in self.listOfPaths:
-    		if os.path.splitext(f)[1] == '.txt':
-    			with open(root + '/' + f,errors='ignore') as cur_f:
-                            if keyword in cur_f.read():
-                                results.append(os.path.join(root, f))
-    		if os.path.splitext(f)[1] == '.xlsx':
-    			wb = xlrd.open_workbook(os.path.join(root,f))
-                        sheet = wb.sheet_by_index(0)
-                        for row_num in range(sheet.nrows):
-                            for col_num in range(sheet.ncols):
-                                cell_obj = sheet.row(row_num)[col_num]
-                                if keyword == cell_obj.value:
-                                    results.append(os.path.join(root, f))
-    		if os.path.splitext(f)[1] == '.pptx':
-    			prs = Presentation(os.path.join(root,f))
-                        for slides in prs.slides:
-                            for shape in slides.shapes:
-                                if shape.has_text_frame:
-                                    if (shape.text.find(keyword)) != -1:
-                                        results.append(os.path.join(root, f))
-    		if os.path.splitext(f)[1] == '.docx':
-    			document = Document(root + '/' + f)
-                        for p in document.paragraphs:
-                            if p.text.find(keyword) != -1:
-                                results.append(os.path.join(root, f))
-        return results
-
-
     def search_directory(self, keyword):
         results = []
         for each in self.all_drives:
             for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
+                    print('searching ' + f)
                     if os.path.splitext(f)[1] == '.txt':
-                    	# append path to the list
-                    	self.listOfPaths.append(os.path.join(root, f)
-
                         with open(root + '/' + f,errors='ignore') as cur_f:
                             if keyword in cur_f.read():
                                 results.append(os.path.join(root, f))
+                                break
 
                     if os.path.splitext(f)[1] == '.xlsx':
-                    	# append path to the list
-                    	self.listOfPaths.append(os.path.join(root, f)
-
-                        #wb = xlrd.open_workbook(os.path.expanduser('C:/a1/a1.xlsx'))
-                        wb = xlrd.open_workbook(os.path.join(root,f))
-                        sheet = wb.sheet_by_index(0)
-                        for row_num in range(sheet.nrows):
-                            for col_num in range(sheet.ncols):
-                                cell_obj = sheet.row(row_num)[col_num]
-                                if keyword == cell_obj.value:
-                                    results.append(os.path.join(root, f))
+                        if f[0] != '~' and f[0] != '$':
+                            #wb = xlrd.open_workbook(os.path.expanduser('C:/a1/a1.xlsx'))
+                            wb = xlrd.open_workbook(os.path.join(root,f))
+                            sheet = wb.sheet_by_index(0)
+                            for row_num in range(sheet.nrows):
+                                for col_num in range(sheet.ncols):
+                                    cell_obj = sheet.row(row_num)[col_num]
+                                    if keyword == cell_obj.value:
+                                        results.append(os.path.join(root, f))
+                                        break
 
                     if os.path.splitext(f)[1] == '.pptx':
-                    	# append path to the list
-                    	self.listOfPaths.append(os.path.join(root, f)
-
                         #f = open(os.path.expanduser('~/.' + f)
-                        prs = Presentation(os.path.join(root,f))
-                        for slides in prs.slides:
-                            for shape in slides.shapes:
-                                if shape.has_text_frame:
-                                    if (shape.text.find(keyword)) != -1:
-                                        results.append(os.path.join(root, f))
+                        if f[0] != '0':
+                            prs = Presentation(os.path.join(root,f))
+                            for slides in prs.slides:
+                                for shape in slides.shapes:
+                                    if shape.has_text_frame:
+                                        if (shape.text.find(keyword)) != -1:
+                                            results.append(os.path.join(root, f))
+                                            break
+
 
                     if os.path.splitext(f)[1] == '.docx':
-                    	# append path to the list
-                    	self.listOfPaths.append(os.path.join(root, f)
-
-                        document = Document(root + '/' + f)
-                        for p in document.paragraphs:
-                            if p.text.find(keyword) != -1:
-                                results.append(os.path.join(root, f))
+                        if f[0] != '$' and f[0] != '0' and f[0] != '~':
+                            document = Document(root + '/' + f)
+                            for p in document.paragraphs:
+                                if p.text.find(keyword) != -1:
+                                    results.append(os.path.join(root, f))
+                                    break
         return results
 
 
