@@ -81,7 +81,7 @@ class App(QMainWindow):
                             self.response_box.setTextColor(QColor(255, 0, 0))
                             self.response_box.insertPlainText(key_content)
                             self.response_box.setTextColor(QColor(0, 0, 0))
-                            self.response_box.insertPlainText(word[endpos:])
+                            self.response_box.insertPlainText(word[endpos:] + ' ')
                     if text_content:
                         non_key_content = " " + " ".join(text_content)
                         self.response_box.setTextColor(QColor(0, 0, 0))
@@ -99,15 +99,21 @@ class App(QMainWindow):
                 for col_num in range(sheet.ncols):
                     cell_obj = sheet.row(row_num)[col_num]
                     if cell_obj.value.find(self.keyword) == -1:
-                        normalData.append(cell_obj.value)
+                        normalData.append(cell_obj.value + "    ")
                     else:
-                        normalOutput = "    ".join(normalData)
+                        startpos = cell_obj.value.find(self.keyword)
+                        endpos = startpos + len(self.keyword)
+                        normalData.append(cell_obj.value[0:startpos])
+                        non_key_content = "    ".join(normalData)
                         self.response_box.setTextColor(QColor(0, 0, 0))
-                        self.response_box.insertPlainText(normalOutput)
+                        self.response_box.insertPlainText(non_key_content)
                         del normalData[:]
-                        key_content = self.keyword + "  "
+                        key_content = self.keyword
+                        non_key_content = ""
                         self.response_box.setTextColor(QColor(255, 0, 0))
                         self.response_box.insertPlainText(key_content)
+                        self.response_box.setTextColor(QColor(0, 0, 0))
+                        self.response_box.insertPlainText(cell_obj.value[endpos:] + "    ")
                 normalData.append('\n')
             if normalData:
                 normalOutput = "    ".join(normalData)
@@ -126,18 +132,22 @@ class App(QMainWindow):
                             tmp_text += shape.text
                             fields = tmp_text.split(" ")
                             for word in fields:
-                                if word != self.keyword:
+                                if word.find(self.keyword) == -1:
                                     normalData.append(word)
                                 else:
-                                    normalOutput = " ".join(normalData)
-                                    normalOutput += " "
+                                    startpos = word.find(self.keyword)
+                                    endpos = startpos + len(self.keyword)
+                                    normalData.append(word[0:startpos])
+                                    non_key_content = " ".join(normalData)
                                     self.response_box.setTextColor(QColor(0, 0, 0))
-                                    self.response_box.insertPlainText(normalOutput)
+                                    self.response_box.insertPlainText(non_key_content)
                                     del normalData[:]
-                                    key_content = " " + self.keyword + " "
-                                    normalOutput = ""
+                                    key_content = self.keyword
+                                    non_key_content = ""
                                     self.response_box.setTextColor(QColor(255, 0, 0))
                                     self.response_box.insertPlainText(key_content)
+                                    self.response_box.setTextColor(QColor(0, 0, 0))
+                                    self.response_box.insertPlainText(word[endpos:] + ' ')
                             if normalData:
                                 normalOutput = " ".join(normalData)
                                 self.response_box.setTextColor(QColor(0, 0, 0))
@@ -162,18 +172,22 @@ class App(QMainWindow):
                     tmp_text += p.text
                     fields = tmp_text.split(" ")
                     for word in fields:
-                        if word != self.keyword:
+                        if word.find(self.keyword) == -1:
                             normalData.append(word)
                         else:
-                            normalOutput = " ".join(normalData)
-                            normalOutput += " "
+                            startpos = word.find(self.keyword)
+                            endpos = startpos + len(self.keyword)
+                            normalData.append(word[0:startpos])
+                            non_key_content = " ".join(normalData)
                             self.response_box.setTextColor(QColor(0, 0, 0))
-                            self.response_box.insertPlainText(normalOutput)
+                            self.response_box.insertPlainText(non_key_content)
                             del normalData[:]
-                            key_content = " " + self.keyword + " "
-                            normalOutput = ""
+                            key_content = self.keyword
+                            non_key_content = ""
                             self.response_box.setTextColor(QColor(255, 0, 0))
                             self.response_box.insertPlainText(key_content)
+                            self.response_box.setTextColor(QColor(0, 0, 0))
+                            self.response_box.insertPlainText(word[endpos:] + ' ')
                     if normalData:
                         normalData.append("\n")
                         normalOutput = " " + " ".join(normalData)
@@ -191,13 +205,12 @@ class App(QMainWindow):
                     self.response_box.insertPlainText(normalOutput)
                     normalOutput = ""
 
-        self.combo.clear()
-
 
     @pyqtSlot()
     def on_click(self):
         textboxValue = self.textbox.text()
         self.keyword = textboxValue
+        self.combo.clear()
         li = self.search_directory(textboxValue)
         self.combo.addItems(li)
         self.textbox.setText("")
@@ -220,9 +233,8 @@ class App(QMainWindow):
         for each in self.all_drives:
             for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
-                    print('searching ' + f)
                     if os.path.splitext(f)[1] == '.txt':
-                        with open(root + '/' + f,errors='ignore') as cur_f:
+                        with open(root + '/' + f, errors='ignore') as cur_f:
                             if keyword in cur_f.read():
                                 results.append(os.path.join(root, f))
                                 break
@@ -236,6 +248,7 @@ class App(QMainWindow):
                                 for col_num in range(sheet.ncols):
                                     cell_obj = sheet.row(row_num)[col_num]
                                     if keyword == cell_obj.value:
+                                        print(f)
                                         results.append(os.path.join(root, f))
                                         break
 
