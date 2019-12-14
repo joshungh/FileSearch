@@ -233,7 +233,11 @@ class App(QMainWindow):
         for each in self.all_drives:
             for root, dir, files in os.walk(each, topdown=True):
                 for f in files:
-                    print(root, f)
+                	if os.path.splitext(f)[1] == '.txt':
+                        with open(root + '/' + f,errors='ignore') as cur_f:
+                            if keyword in cur_f.read():
+                                results.append(os.path.join(root, f))
+                                break
 
                     if os.path.splitext(f)[1] == '.xlsx':
                         if f[0] != '$' and f[0] != '0' and f[0] != '~' and (f[0] != 'W' and f[1] != 'D' and f[2] != 'A' and f[2] != 'G'):
