@@ -1,11 +1,14 @@
 # FileSearch
 Python application that searches a directory for text file that contains a string.
 
-#Authors:
+# Important Note:
+Please use master branch, DO NOT USE ANY OTHER BRANCHES!
+
+# Authors:
 
 Grae Lessley,	 Kevin Chen,   Eric Tran, 	Lambert Liu, 	Josh Ungheanu
 
-#How To run:
+# How To run:
 
 1. Double click FileSearch.exe
 2. A terminal winodw will pop up
